@@ -1,0 +1,188 @@
+
+[
+        {
+            "description": "Rule 1",
+            "type": "All",
+            "conditions": [
+                {
+                    "field": "from_address",
+                    "predicate": "Contains",
+                    "value": "hirist"
+                },
+                {
+                    "field": "Subject",
+                    "predicate": "Contains",
+                    "value": "hirist"
+                },
+                {
+                    "field": "received_date",
+                    "predicate": "Less than",
+                    "value": "1 days"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Inbox"
+                },
+                {
+                    "type": "Mark as read"
+                }
+            ]
+        },
+        {
+            "description": "Rule 2",
+            "type": "Any",
+            "conditions": [
+                {
+                    "field": "from_address",
+                    "predicate": "Equals",
+                    "value": "LinkedIn"
+                },
+                {
+                    "field": "Subject",
+                    "predicate": "Contains",
+                    "value": "software"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Important"
+                },
+                {
+                    "type": "Mark as unread"
+                }
+            ]
+        },
+        {
+            "description": "Rule 3",
+            "type": "All",
+            "conditions": [
+                {
+                    "field": "to_address",
+                    "predicate": "Contains",
+                    "value": "manan"
+                },
+                {
+                    "field": "received_date",
+                    "predicate": "Greater than",
+                    "value": "7 days"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Archive"
+                }
+            ]
+        },
+        {
+            "description": "Rule 4",
+            "type": "Any",
+            "conditions": [
+                {
+                    "field": "Subject",
+                    "predicate": "Does not Contain",
+                    "value": "Promotion"
+                },
+                {
+                    "field": "Message",
+                    "predicate": "Contains",
+                    "value": "meeting"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Work"
+                }
+            ]
+        },
+        {
+            "description": "Rule 5",
+            "type": "All",
+            "conditions": [
+                {
+                    "field": "from_address",
+                    "predicate": "Does not equal",
+                    "value": "noreply@example.com"
+                },
+                {
+                    "field": "Subject",
+                    "predicate": "Equals",
+                    "value": "Weekly Report"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Mark as read"
+                }
+            ]
+        },
+        {
+            "description": "Rule 6",
+            "type": "Any",
+            "conditions": [
+                {
+                    "field": "from_address",
+                    "predicate": "Contains",
+                    "value": "newsletter"
+                },
+                {
+                    "field": "to_address",
+                    "predicate": "Equals",
+                    "value": "user@domain.com"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Promotions"
+                }
+            ]
+        },
+        {
+            "description": "Rule 7",
+            "type": "All",
+            "conditions": [
+                {
+                    "field": "received_date",
+                    "predicate": "Less than",
+                    "value": "1 days"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Today"
+                },
+                {
+                    "type": "Mark as read"
+                }
+            ]
+        },
+        {
+            "description": "Rule 8",
+            "type": "Any",
+            "conditions": [
+                {
+                    "field": "Subject",
+                    "predicate": "Does not Contain",
+                    "value": "spam"
+                },
+                {
+                    "field": "Message",
+                    "predicate": "Contains",
+                    "value": "project update"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Move Message",
+                    "destination": "Projects"
+                }
+            ]
+        }
+]
+
