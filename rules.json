@@ -12,7 +12,7 @@
                 {
                     "field": "Subject",
                     "predicate": "Contains",
-                    "value": "hirist"
+                    "value": "Interview"
                 },
                 {
                     "field": "received_date",
@@ -37,12 +37,12 @@
                 {
                     "field": "from_address",
                     "predicate": "Equals",
-                    "value": "LinkedIn"
+                    "value": "manangoyal"
                 },
                 {
                     "field": "Subject",
                     "predicate": "Contains",
-                    "value": "software"
+                    "value": "Application"
                 }
             ],
             "actions": [
