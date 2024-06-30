@@ -41,27 +41,28 @@ Before running the application, ensure you have the following installed:
    - Download the `credentials.json` file and place it in the root directory of the project.
    
 ## Running the Application
+6. Fetch and Store Emails
 
-6. Run the Flask Application
+  - Run the fetch_emails script
 
-   ```bash
-   python app.py
-  - The application will start running on `http://localhost:5000/`.
+    ```bash
+    python fetch_emails.py
+    ```
+  - Fetches emails from Gmail and stores them in the database.
+  - By default, it will fetch 100 emails. You can change the number of emails by modifying the code.
+    
+    ```sh
+    fetch_emails(service, <batch_size>)
+    ```
 
-## API Endpoints
+7. Process Emails
 
-- Fetch and Store Emails
-
-  - Endpoint: `POST /fetch_emails`
-  - Description: Fetches emails from Gmail and stores them in the database.
-  - Request Body: JSON with batch_size parameter.
+  - Applies a rule to fetch and process emails based on `rule_description`.
   
-   ```bash
-   curl -X POST http://localhost:5000/fetch_emails -H "Content-Type: application/json" -d '{"batch_size": 50}'
+    ```bash
+    python process_emails.py <rule_description>
+    python process_emails.py "Rule 2"     # example
+    ```
+  - This will process the stored emails from DB based on the rules and apply actions through Gmail API.
 
-- Process Emails
-  - Endpoint: `GET /process_emails`
-  - Description: Applies a rule to fetch and process emails based on `rule_description` query parameter.
-  
-   ```bash
-   curl -X GET 'http://localhost:5000/process_emails?rule_description=Rule 2'
+

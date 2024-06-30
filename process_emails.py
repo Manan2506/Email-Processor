@@ -1,6 +1,12 @@
 import json
 import psycopg2
 from datetime import datetime, timedelta
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+import os
+import pickle
+import argparse
 
 
 def load_rules():
@@ -55,15 +61,44 @@ def fetch_emails_by_rule(rule_description):
         host="localhost"
     )
     cursor = conn.cursor()
-    import pdb;pdb.set_trace()
-    cursor.execute(f"SELECT id, snippet, from_address, to_address, subject, message, received_date FROM emails WHERE {where_clause}")
+    cursor.execute(
+        f"SELECT id, snippet, from_address, to_address, subject, message,"
+        f" received_date FROM emails WHERE {where_clause}")
     emails = cursor.fetchall()
     conn.close()
 
     return emails, target_rule
 
 
+def authenticate_gmail():
+    SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+    creds = None
+    token_path = 'token.pickle'
+    credentials_path = 'credentials.json'
+
+    if os.path.exists(token_path):
+        with open(token_path, 'rb') as token:
+            creds = pickle.load(token)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                print(f"Error refreshing credentials: {e}")
+                os.remove(token_path)
+                creds = None
+        if not creds:
+            flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+            creds = flow.run_local_server(port=0)
+            with open(token_path, 'wb') as token:
+                pickle.dump(creds, token)
+
+    return build('gmail', 'v1', credentials=creds)
+
+
 def apply_actions(email_list, actions, rule_description):
+    service = authenticate_gmail()
     conn = psycopg2.connect(
         dbname="email_processor",
         user="postgres",
@@ -71,17 +106,65 @@ def apply_actions(email_list, actions, rule_description):
         host="localhost"
     )
     cursor = conn.cursor()
-    import pdb;pdb.set_trace()
+
     for email in email_list:
         for action in actions:
             if action['type'] == 'Mark as read':
-                cursor.execute("UPDATE emails SET is_read = TRUE WHERE id = %s", (email['id'],))
+                mark_as_read(service, email['id'])
             elif action['type'] == 'Mark as unread':
-                cursor.execute("UPDATE emails SET is_read = FALSE WHERE id = %s", (email['id'],))
+                mark_as_unread(service, email['id'])
             elif action['type'] == 'Move Message':
-                cursor.execute("UPDATE emails SET folder = %s WHERE id = %s", (action['destination'], email['id']))
-        res = cursor.execute("INSERT INTO email_rules (email_id, rule_description) VALUES (%s, %s) ON CONFLICT DO "
-                             "NOTHING", (email['id'], rule_description))
+                move_message(service, email['id'], action['destination'])
+        cursor.execute("INSERT INTO email_rules (email_id, rule_description) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                       (email['id'], rule_description))
+
     conn.commit()
     conn.close()
 
+
+def mark_as_read(service, msg_id):
+    res = service.users().messages().modify(userId='me', id=msg_id, body={'removeLabelIds': ['UNREAD']}).execute()
+    print(f"Message id {msg_id} Marked as read", res)
+
+
+def mark_as_unread(service, msg_id):
+    res = service.users().messages().modify(userId='me', id=msg_id, body={'addLabelIds': ['UNREAD']}).execute()
+    print(f"Message id {msg_id} Marked as unread", res)
+
+def move_message(service, msg_id, destination):
+    labels = {
+        'Inbox': 'INBOX',
+        'Important': 'IMPORTANT',
+        'Work': 'CATEGORY_WORK',
+        'Projects': 'CATEGORY_PROJECTS',
+        'Promotions': 'CATEGORY_PROMOTIONS',
+        'Archive': 'CATEGORY_ARCHIVE',
+        'Today': 'CATEGORY_TODAY'
+    }
+    if destination in labels:
+        label_id = labels[destination]
+        res = service.users().messages().modify(userId='me', id=msg_id, body={'addLabelIds': [label_id]}).execute()
+        print(f"Message id {msg_id} moved to {destination}", res)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process emails based on rules.')
+    parser.add_argument('rule_description', type=str, help='The description of the rule to apply.')
+    args = parser.parse_args()
+
+    emails, target_rule = fetch_emails_by_rule(args.rule_description)
+
+    email_list = []
+    for email in emails:
+        email_dict = {
+            'id': email[0],
+            'snippet': email[1],
+            'from_address': email[2],
+            'to_address': email[3],
+            'subject': email[4],
+            'message': email[5],
+            'received_date': email[6]
+        }
+        email_list.append(email_dict)
+
+    if email_list:
+        apply_actions(email_list, target_rule['actions'], args.rule_description)
